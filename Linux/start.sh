@@ -6,6 +6,9 @@
 # need to do:
 # PAM
 # Crontab
+# Check sudoers
+# rootkit
+# apache
 
 if [ ! "$BASH_VERSION" ] ; then
     chmod +x "$0"
@@ -178,6 +181,25 @@ while [ "${1:-}" != "" ]; do
 done
 
 
+
+unalias -a #Get rid of aliases
+echo "unalias -a" >> ~/.bashrc
+echo "unalias -a" >> /root/.bashrc
+
+
+
+sudo sysctl -w net.ipv4.tcp_syncookies=1
+sudo sysctl -w net.ipv4.ip_forward=0
+sudo sysctl -w net.ipv4.conf.all.send_redirects=0
+sudo sysctl -w net.ipv4.conf.default.send_redirects=0
+sudo sysctl -w net.ipv4.conf.all.accept_redirects=0
+sudo sysctl -w net.ipv4.conf.default.accept_redirects=0
+sudo sysctl -w net.ipv4.conf.all.secure_redirects=0
+sudo sysctl -w net.ipv4.conf.default.secure_redirects=0
+sudo sysctl -p
+
+
+
 # normal update
 if [ "$update" = false ]
 then
@@ -200,7 +222,13 @@ fi
 # !full update
 
 # ufw
-if  [ "$firewall" = true ]
+if [ "$firewall" = false ]
+then
+    apt-get install ufw
+    systemctl start ufw
+    ufw default deny
+    ufw enable
+elif [ "$firewall" = true ]
 then
     apt-get remove ufw
     apt-get install ufw
@@ -217,14 +245,12 @@ sudo apt-get purge telnet
 fi
 # !telnet
 
-
 # ssh
 if [ "$ssh" = true ]
 then
     sudo apt-get -y purge openssh-server* 
 fi
 # !ssh
-
 
 # ftp
 if [ "$ftp" = true ]
@@ -245,10 +271,13 @@ fi
 # find banned file types
 if [ "$banned" = true ]
 then
-    for suffix in mp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh
-    do
-    sudo find /home -name *.$suffix
-    done
+    if [ "$banned" = true ]
+    then
+        for suffix in mp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh
+        do
+        sudo find /home -name *.$suffix
+        done
+    fi | less
 fi
 # !find banned file types
 
