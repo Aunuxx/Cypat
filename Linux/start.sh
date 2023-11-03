@@ -9,6 +9,9 @@
 # Check sudoers
 # rootkit
 # apache
+# unalias
+
+# add help to list
 
 if [ ! "$BASH_VERSION" ] ; then
     chmod +x "$0"
@@ -23,26 +26,28 @@ then
     exit 1
 fi
 
+on=false
+out=false
 
+# update help
 help(){
     echo 
     echo -e "Usage: [option]"
 
-    echo -e "\tShorthand\tLong Name\t\tDescription\t\t\t\tNon-Invasive?\t\tList?"
+    echo -e "\tShorthand\tLong Name\t\tDescription\t\t\t\tNon-Invasive?\tList?"
 
     echo -e "\t-m\t\t--minimal\t\tenables non-invasive changes\t\tYes"
     echo -e "\t-a\t\t--all\t\t\tall changes excluding list option"
-    echo -e "\t-la\t\t--all-list\t\tall changes and list options"
     echo
-    echo -e "\t-l\t\t--list\t\t\tenable options that output a list\tYes"
+    echo -e "\t-l\t\t--list\t\t\tenable all list options\t\t\tYes"
     echo
-    echo -e "\t-f\t\t--firewall\t\ttoggle firewall changes"
+    echo -e "\t-f\t\t--firewall\t\ttoggle full firewall changes"
     echo -e "\t-u\t\t--full-update\t\ttoggle full update"
     echo -e "\t-t\t\t--telent\t\ttoggle telnet removal"
     echo -e "\t-s\t\t--ssh\t\t\ttoggle ssh removal"
     echo -e "\t-f\t\t--ftp\t\t\ttoggle ftp removal"
     echo -e "\t-M\t\t--malware\t\ttoggle malware removal"
-    echo -e "\t-b\t\t--banned\t\ttoggle banned file listing\t\tYes\t\t\tYes"
+    echo -e "\t-b\t\t--banned\t\ttoggle banned file listing\t\tYes\t\tYes"
     echo
     exit 1 # Exit script after printing help
 }
@@ -70,26 +75,23 @@ all(){
     malware=true
     banned=false
 }
-out(){
-    banned=true
-}
+
 
 
 
 while [ "${1:-}" != "" ]; do
     case "$1" in
         "-m" | "--minimal" )
-            minimal ;;
+            minimal
+            on=true ;;
 
         "-a" | "--all" )
-            all ;;
+            all
+            on=true ;;
 
         "-l" | "--list" )
-            out ;;
-
-        "-la" | "--all-list" )
-            all
-            out ;;
+            out=true
+            on=true ;;
 
         "-f" | "--firewall" ) 
             if [ "$firewall" = true ]
@@ -181,30 +183,39 @@ while [ "${1:-}" != "" ]; do
 done
 
 
+if [ "$on" = false ] 
+then
+    unalias -a #Get rid of aliases
+    echo "unalias -a" >> ~/.bashrc
+    echo "unalias -a" >> /root/.bashrc
 
-unalias -a #Get rid of aliases
-echo "unalias -a" >> ~/.bashrc
-echo "unalias -a" >> /root/.bashrc
+    echo -e "\e[1mFirst time setup complete\e[m"
+    echo -e "\e[1mRun with arguments\e[m"
+fi
 
 
-
-sudo sysctl -w net.ipv4.tcp_syncookies=1
-sudo sysctl -w net.ipv4.ip_forward=0
-sudo sysctl -w net.ipv4.conf.all.send_redirects=0
-sudo sysctl -w net.ipv4.conf.default.send_redirects=0
-sudo sysctl -w net.ipv4.conf.all.accept_redirects=0
-sudo sysctl -w net.ipv4.conf.default.accept_redirects=0
-sudo sysctl -w net.ipv4.conf.all.secure_redirects=0
-sudo sysctl -w net.ipv4.conf.default.secure_redirects=0
-sudo sysctl -p
-
+if [ "$on" = true ]
+then
+    sudo sysctl -w net.ipv4.tcp_syncookies=1
+    sudo sysctl -w net.ipv4.ip_forward=0
+    sudo sysctl -w net.ipv4.conf.all.send_redirects=0
+    sudo sysctl -w net.ipv4.conf.default.send_redirects=0
+    sudo sysctl -w net.ipv4.conf.all.accept_redirects=0
+    sudo sysctl -w net.ipv4.conf.default.accept_redirects=0
+    sudo sysctl -w net.ipv4.conf.all.secure_redirects=0
+    sudo sysctl -w net.ipv4.conf.default.secure_redirects=0
+    sudo sysctl -p
+fi
 
 
 # normal update
 if [ "$update" = false ]
 then
-apt-get update
-apt-get upgrade
+    if [ "$on" = true ] 
+        then
+        apt-get update
+        apt-get upgrade -y
+    fi
 fi
 # !normal update
 
@@ -224,10 +235,13 @@ fi
 # ufw
 if [ "$firewall" = false ]
 then
-    apt-get install ufw
-    systemctl start ufw
-    ufw default deny
-    ufw enable
+    if [ "$on" = true ] 
+    then
+        apt-get install ufw
+        systemctl start ufw
+        ufw default deny
+        ufw enable
+    fi
 elif [ "$firewall" = true ]
 then
     apt-get remove ufw
@@ -268,16 +282,38 @@ then
 fi
 # !malware
 
-# find banned file types
-if [ "$banned" = true ]
+# PAM
+if [ "$pam" = true ]
 then
-    if [ "$banned" = true ]
-    then
-        for suffix in mp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh
-        do
-        sudo find /home -name *.$suffix
-        done
-    fi | less
+    sudo sed -i '1 s/^/auth optional pam_tally.so deny=5 unlock_time=900 onerr=fail audit even_deny_root_account silent\n/' /etc/pam.d/common-auth
+    sudo apt-get -y install libpam-cracklib
+    sudo sed -i '1 s/^/password requisite pam_cracklib.so retry=3 minlen=8 difok=3 reject_username minclass=3 maxrepeat=2 dcredit=1 ucredit=1 lcredit=1 ocredit=1\n/' /etc/pam.d/common-password
 fi
-# !find banned file types
+# !PAM
 
+
+
+#ps -ax | less
+
+
+# list options
+
+
+if [ true = true ] 
+then
+    echo -e "\e[1mbanned file types:\e[m"
+    echo -e "\e[3mmp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh\e[m"
+
+    for suffix in mp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh
+    do
+    sudo find /home -name *.$suffix
+    done
+
+    echo
+    echo
+    echo -e "\e[1mprocesses that are stopped and running\e[m"
+    echo -e "\e[3mlook for [R]unning processes\e[m"
+    echo -e "you can use 'man ps' to find other 'STAT' codes"
+
+    ps -ax
+fi | less -r
