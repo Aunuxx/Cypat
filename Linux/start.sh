@@ -4,8 +4,8 @@
 # frin
 
 # need to do:
-# PAM
-# Crontab
+# PAM ##
+# Crontab & user tag
 # Check sudoers
 # rootkit
 # apache
@@ -293,27 +293,54 @@ fi
 
 
 
-#ps -ax | less
-
-
 # list options
 
 
-if [ true = true ] 
-then
-    echo -e "\e[1mbanned file types:\e[m"
-    echo -e "\e[3mmp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh\e[m"
+#{
 
-    for suffix in mp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh
-    do
-    sudo find /home -name *.$suffix
-    done
+#    echo -e "\e[1mbanned file types:\e[m"
+#    echo -e "\e[3mmp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh\e[m"
 
-    echo
-    echo
-    echo -e "\e[1mprocesses that are stopped and running\e[m"
-    echo -e "\e[3mlook for [R]unning processes\e[m"
-    echo -e "you can use 'man ps' to find other 'STAT' codes"
+#    for suffix in mp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh
+#    do
+#    find /home -name *.$suffix
+#    done
 
-    ps -ax
-fi | less -r
+#    echo
+#    echo
+#    echo -e "\e[1mprocesses that are stopped and running\e[m"
+#    echo -e "\e[3mlook for [R]unning processes\e[m"
+#    echo -e "you can use 'man ps' to find other 'STAT' codes"
+
+#    ps -ax
+
+#   echo
+#   echo
+#   echo "exit with 'q'"
+#   echo
+
+#} | less -r -q
+
+#{
+
+#    echo
+#    echo -e "crontab\nscript --users tag required"
+#    echo -e "look for users that do have crontab and run:"
+#    echo
+#    echo -e "\`\`\`\e[5m"
+#    echo -e "\e[1msu - username\e[22m\e[3m # evaluate as user \e[23m"
+#    echo -e "\e[1mcrontab -e\e[22m\e[3m # edit user crontab\e[23m\e[25m"
+#    echo
+#    echo -e "\`\`\`"
+
+    # limited timing by waiting for echo to finish first so crontab can be executed at the right time
+    # root
+#    echo && crontab -l
+
+#    while read user
+#    do
+#    echo
+#    echo "$user" && crontab -l -u "$user"
+#    done < ./users.txt
+
+#} | less -r
