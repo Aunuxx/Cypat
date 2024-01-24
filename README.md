@@ -1,5 +1,5 @@
-## Cyberpatiot scripts
-### frin
+## Cyberpatriot scripts
+### Frin
 
 It is aginst compition guidelines to use a script other than your own
 
